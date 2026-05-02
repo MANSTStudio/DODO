@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة الدودة الاحترافية</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        h1 {
+            color: #4CAF50;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 2.5rem;
+            text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+        }
+        #menu-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 450px;
+            padding: 25px;
+            background-color: #1e1e1e;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            border: 1px solid #333;
+        }
+        .menu-title {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #aaa;
+            text-align: center;
+        }
+        .btn {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        .btn:hover {
+            background-color: #45a049;
+            box-shadow: 0 0 15px rgba(76, 175, 80, 0.4);
+        }
+        .btn:active {
+            transform: scale(0.98);
+        }
+        .btn-danger {
+            background-color: #f44336;
+        }
+        .btn-danger:hover {
+            background-color: #d32f2f;
+            box-shadow: 0 0 15px rgba(244, 67, 54, 0.4);
+        }
+        #game-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            border: 1px solid #333;
+            margin-bottom: 20px;
+            transition: transform 0.1s ease;
+        }
+        #score-board {
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        canvas {
+            border: 4px solid #4CAF50;
+            background-color: #1a1a1a;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            max-width: 100%;
+            height: auto;
+        }
+        .controls-ui {
+            margin-top: 15px;
+            color: #666;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+        .mobile-controls {
+            display: none;
+            grid-template-columns: repeat(3, 65px);
+            grid-template-rows: repeat(2, 65px);
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+        @media (max-width: 768px) {
+            .mobile-controls {
+                display: grid;
+            }
+        }
+        .m-btn {
+            background-color: #333;
+            color: #fff;
+            border: 2px solid #444;
+            border-radius: 50%;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+        }
+        .m-btn:active {
+            background-color: #555;
+        }
+        .m-up { grid-column: 2; grid-row: 1; }
+        .m-left { grid-column: 1; grid-row: 2; }
+        .m-down { grid-column: 2; grid-row: 2; }
+        .m-right { grid-column: 3; grid-row: 2; }
+
+        .shake {
+            animation: shake-animation 0.3s ease-in-out;
+        }
+
+        @keyframes shake-animation {
+            0% { transform: translate(0, 0); }
+            20% { transform: translate(-10px, 0); }
+            40% { transform: translate(10px, 0); }
+            60% { transform: translate(-5px, 0); }
+            80% { transform: translate(5px, 0); }
+            100% { transform: translate(0, 0); }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🎮 لعبة الدودة 🎮</h1>
+
+    <div id="menu-container">
+        <div class="menu-title">اختر طور اللعب الذي تريده:</div>
+        <button class="btn" onclick="chooseMode(1)">1️⃣ كلاسيكي عادي</button>
+        <button class="btn" onclick="chooseMode(2)">2️⃣ طور المربع العملاق</button>
+        <button class="btn" onclick="chooseMode(3)">3️⃣ طور اللعبة السريعة جداً</button>
+        <button class="btn btn-danger" onclick="chooseMode(4)">4️⃣ طور التفاحات المتعددة (صعب)</button>
+    </div>
+
+    <div id="game-container" id="gameContainerBlock">
+        <div id="score-board">النقاط: <span id="score">0</span></div>
+        <canvas id="gameCanvas" width="400" height="400"></canvas>
+        
+        <div class="controls-ui">استخدم أسهم لوحة المفاتيح أو WASD للتحكم</div>
+        
+        <div class="mobile-controls">
+            <button class="m-btn m-up" onclick="moveDirection('UP')">▲</button>
+            <button class="m-btn m-left" onclick="moveDirection('LEFT')">◀</button>
+            <button class="m-btn m-down" onclick="moveDirection('DOWN')">▼</button>
+            <button class="m-btn m-right" onclick="moveDirection('RIGHT')">▶</button>
+        </div>
+        
+        <button class="btn btn-danger" style="margin-top: 15px; width: 200px;" onclick="returnToMenu()">العودة للقائمة</button>
+    </div>
+
+    <script>
+        const menu = document.getElementById('menu-container');
+        const gameContainer = document.getElementById('game-container');
+        const scoreElement = document.getElementById('score');
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let gridSize = 20;
+        let tileCount = 20; 
+        let snake = [];
+        let foods = []; 
+        let dx = 1;
+        let dy = 0;
+        let score = 0;
+        let gameInterval;
+        let changingDirection = false;
+        let currentMode = 1;
+        let activeModeConfig = { speed: 100, canvasSize: 400, foodCount: 1 };
+        
+        // نظام الصوت
+        let audioCtx = null;
+        let bgmNode = null;
+        let bgmGainNode = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function startBGM() {
+            if (!audioCtx) initAudio();
+            if (bgmNode) return;
+            
+            bgmNode = audioCtx.createOscillator();
+            bgmGainNode = audioCtx.createGain();
+            
+            bgmNode.type = 'triangle';
+            bgmNode.frequency.setValueAtTime(110, audioCtx.currentTime);
+            bgmGainNode.gain.setValueAtTime(0.012, audioCtx.currentTime);
+            
+            bgmNode.connect(bgmGainNode);
+            bgmGainNode.connect(audioCtx.destination);
+            bgmNode.start();
+            
+            // إضافة لحن بسيط
+            setInterval(() => {
+                if (!bgmNode) return;
+                let ct = audioCtx.currentTime;
+                bgmNode.frequency.setValueAtTime(110, ct);
+                bgmNode.frequency.linearRampToValueAtTime(140, ct + 3);
+                bgmNode.frequency.linearRampToValueAtTime(110, ct + 6);
+            }, 6000);
+        }
+
+        function stopBGM() {
+            if (bgmNode) {
+                try {
+                    bgmNode.stop();
+                } catch(e) {}
+                bgmNode = null;
+            }
+        }
+
+        function playSoundEffect(type) {
+            initAudio();
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            if (type === 'eat') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(500, now);
+                osc.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
+                gainNode.gain.setValueAtTime(0.1, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.1);
+            } else if (type === 'die') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(250, now);
+                osc.frequency.exponentialRampToValueAtTime(40, now + 0.5);
+                gainNode.gain.setValueAtTime(0.3, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.5);
+            }
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(now + 0.5);
+        }
+
+        // إعدادات الأطوار المختلفة
+        function chooseMode(mode) {
+            currentMode = mode;
+            menu.style.display = 'none';
+            gameContainer.style.display = 'flex';
+
+            if (mode === 1) {
+                // الكلاسيكي
+                activeModeConfig = { speed: 100, canvasSize: 400, foodCount: 1 };
+            } else if (mode === 2) {
+                // المربع العملاق
+                activeModeConfig = { speed: 100, canvasSize: 600, foodCount: 1 };
+            } else if (mode === 3) {
+                // السريع
+                activeModeConfig = { speed: 45, canvasSize: 400, foodCount: 1 };
+            } else if (mode === 4) {
+                // الصعب مع تفاحات متعددة
+                activeModeConfig = { speed: 80, canvasSize: 400, foodCount: 4 };
+            }
+
+            canvas.width = activeModeConfig.canvasSize;
+            canvas.height = activeModeConfig.canvasSize;
+            tileCount = canvas.width / gridSize;
+
+            // بناء الدودة في منتصف الشاشة
+            let center = Math.floor(tileCount / 2);
+            snake = [
+                { x: center, y: center },
+                { x: center - 1, y: center },
+                { x: center - 2, y: center }
+            ];
+
+            dx = 1;
+            dy = 0;
+            score = 0;
+            scoreElement.innerText = score;
+            changingDirection = false;
+
+            // توليد الطعام
+            foods = [];
+            for (let i = 0; i < activeModeConfig.foodCount; i++) {
+                generateFood();
+            }
+
+            if (gameInterval) clearInterval(gameInterval);
+            gameInterval = setInterval(gameLoop, activeModeConfig.speed);
+
+            startBGM();
+        }
+
+        function returnToMenu() {
+            stopBGM();
+            clearInterval(gameInterval);
+            gameContainer.style.display = 'none';
+            menu.style.display = 'flex';
+        }
+
+        // توليد الطعام داخل اللعبة
+        function generateFood() {
+            let newFood = {
+                x: Math.floor(Math.random() * tileCount),
+                y: Math.floor(Math.random() * tileCount)
+            };
+
+            let conflict = true;
+            while (conflict) {
+                conflict = false;
+                // التأكد من عدم وضع الطعام على جسم الدودة
+                for (let part of snake) {
+                    if (part.x === newFood.x && part.y === newFood.y) {
+                        conflict = true;
+                        break;
+                    }
+                }
+                // التأكد من عدم وضع الطعام فوق طعام آخر
+                for (let f of foods) {
+                    if (f.x === newFood.x && f.y === newFood.y) {
+                        conflict = true;
+                        break;
+                    }
+                }
+                if (conflict) {
+                    newFood.x = Math.floor(Math.random() * tileCount);
+                    newFood.y = Math.floor(Math.random() * tileCount);
+                }
+            }
+            foods.push(newFood);
+        }
+
+        function gameLoop() {
+            if (hasGameEnded()) {
+                clearInterval(gameInterval);
+                stopBGM();
+                playSoundEffect('die');
+                triggerShake();
+                alert('انتهت اللعبة! نقاطك: ' + score);
+                returnToMenu();
+                return;
+            }
+
+            changingDirection = false;
+            clearCanvas();
+            drawFoods();
+            moveSnake();
+            drawSnake();
+        }
+
+        function clearCanvas() {
+            if (currentMode === 1) {
+                ctx.fillStyle = '#1a1a1a';
+            } else if (currentMode === 2) {
+                ctx.fillStyle = '#1e1a1e';
+            } else if (currentMode === 3) {
+                ctx.fillStyle = '#1a261a';
+            } else if (currentMode === 4) {
+                ctx.fillStyle = '#2a1a1a';
+            }
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function drawSnake() {
+            snake.forEach((part, index) => {
+                // اللون العام في الطور الرابع مختلف للتصعيب والتمييز
+                if (currentMode === 4) {
+                    ctx.fillStyle = index === 0 ? "#FF5252" : "#FF8A80";
+                } else {
+                    ctx.fillStyle = index === 0 ? "#4CAF50" : "#81C784";
+                }
+                
+                ctx.strokeStyle = '#111';
+                ctx.fillRect(part.x * gridSize, part.y * gridSize, gridSize, gridSize);
+                ctx.strokeRect(part.x * gridSize, part.y * gridSize, gridSize, gridSize);
+            });
+        }
+
+        function drawFoods() {
+            foods.forEach(f => {
+                if (currentMode === 4) {
+                    ctx.fillStyle = "#2196F3"; // اللون أزرق في الطور الصعب
+                } else {
+                    ctx.fillStyle = "#FFC107";
+                }
+                ctx.fillRect(f.x * gridSize, f.y * gridSize, gridSize, gridSize);
+            });
+        }
+
+        function moveSnake() {
+            const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+            snake.unshift(head);
+
+            // التحقق من أكل أي تفاحة
+            let eatenIndex = -1;
+            foods.forEach((f, index) => {
+                if (head.x === f.x && head.y === f.y) {
+                    eatenIndex = index;
+                }
+            });
+
+            if (eatenIndex !== -1) {
+                score += 10;
+                scoreElement.innerText = score;
+                playSoundEffect('eat');
+                foods.splice(eatenIndex, 1);
+                generateFood(); // إضافة تفاحة جديدة مكان التي تم أكلها
+            } else {
+                snake.pop();
+            }
+        }
+
+        function hasGameEnded() {
+            // الاصطدام بالحدود
+            const hitLeft = snake[0].x < 0;
+            const hitRight = snake[0].x >= tileCount;
+            const hitTop = snake[0].y < 0;
+            const hitBottom = snake[0].y >= tileCount;
+
+            // الاصطدام بالجسم
+            for (let i = 4; i < snake.length; i++) {
+                if (snake[i].x === snake[0].x && snake[i].y === snake[0].y) {
+                    return true;
+                }
+            }
+
+            return hitLeft || hitRight || hitTop || hitBottom;
+        }
+
+        function triggerShake() {
+            gameContainer.classList.add('shake');
+            setTimeout(() => {
+                gameContainer.classList.remove('shake');
+            }, 300);
+        }
+
+        // أحداث التحكم للكمبيوتر
+        document.addEventListener('keydown', changeDirection);
+
+        function changeDirection(event) {
+            const keyPressed = event.keyCode;
+            // الأسهم (37: يسار، 38: فوق، 39: يمين، 40: تحت)
+            // مفاتيح WASD (65: يسار، 87: فوق، 68: يمين، 83: تحت)
+            
+            if (changingDirection) return;
+
+            const goingUp = dy === -1;
+            const goingDown = dy === 1;
+            const goingRight = dx === 1;
+            const goingLeft = dx === -1;
+
+            if ((keyPressed === 37 || keyPressed === 65) && !goingRight) {
+                dx = -1; dy = 0; changingDirection = true;
+            }
+            if ((keyPressed === 38 || keyPressed === 87) && !goingDown) {
+                dx = 0; dy = -1; changingDirection = true;
+            }
+            if ((keyPressed === 39 || keyPressed === 68) && !goingLeft) {
+                dx = 1; dy = 0; changingDirection = true;
+            }
+            if ((keyPressed === 40 || keyPressed === 83) && !goingUp) {
+                dx = 0; dy = 1; changingDirection = true;
+            }
+        }
+
+        // التحكم عن طريق شاشات اللمس
+        function moveDirection(dir) {
+            if (changingDirection) return;
+
+            const goingUp = dy === -1;
+            const goingDown = dy === 1;
+            const goingRight = dx === 1;
+            const goingLeft = dx === -1;
+
+            if (dir === 'UP' && !goingDown) {
+                dx = 0; dy = -1; changingDirection = true;
+            } else if (dir === 'DOWN' && !goingUp) {
+                dx = 0; dy = 1; changingDirection = true;
+            } else if (dir === 'LEFT' && !goingRight) {
+                dx = -1; dy = 0; changingDirection = true;
+            } else if (dir === 'RIGHT' && !goingLeft) {
+                dx = 1; dy = 0; changingDirection = true;
+            }
+        }
+    </script>
+</body>
+</html>
